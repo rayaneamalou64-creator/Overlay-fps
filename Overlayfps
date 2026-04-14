@@ -1,0 +1,49 @@
+#include <CTRPluginFramework.hpp>
+
+using namespace CTRPluginFramework;
+
+static int fps = 0;
+static int frameCounter = 0;
+static u64 lastTime = 0;
+static bool showOverlay = true;
+
+u64 GetTimeSeconds() {
+    return svcGetSystemTick() * 1000ULL / SYSCLOCK_ARM11 / 1000;
+}
+
+void UpdateFPS() {
+    frameCounter++;
+    u64 now = GetTimeSeconds();
+    if (now != lastTime) {
+        lastTime = now;
+        fps = frameCounter;
+        frameCounter = 0;
+    }
+}
+
+void DrawOverlay() {
+    Color color = Color::Green;
+    if (fps < 20) color = Color::Red;
+    else if (fps < 40) color = Color::Orange;
+
+    OSD::Draw("FPS: " + std::to_string(fps), 10, 10, color);
+    OSD::Draw("SELECT = toggle overlay", 10, 25, Color::White);
+}
+
+int main() {
+    PluginMenu menu("FPS Overlay");
+
+    menu.OnFrame([]() {
+        UpdateFPS();
+        if (Controller::IsKeyPressed(Key::Select))
+            showOverlay = !showOverlay;
+    });
+
+    menu.OnDraw([]() {
+        if (showOverlay)
+            DrawOverlay();
+    });
+
+    menu.Run();
+    return 0;
+}
