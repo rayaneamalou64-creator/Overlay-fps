@@ -1,0 +1,35 @@
+name: Build 3GX Plugin
+
+on:
+  push:
+    branches: [ principal, main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup devkitPro
+      uses: devkitPro/setup-devkitpro@v2
+      with:
+        devkitarm: true
+
+    - name: Install 3DS tools
+      run: |
+        sudo dkp-pacman -Syu --noconfirm
+        sudo dkp-pacman -S 3ds-dev 3gxtool --noconfirm
+
+    - name: Build the plugin
+      run: |
+        make clean
+        make
+
+    - name: Upload 3GX artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: plugin-3gx
+        path: "*.3gx"
+        if-no-files-found: error
